@@ -85,3 +85,31 @@ def test_direct_dispatch_api(tmp_path: Path) -> None:
     assert tasks_resp.status_code == 200
     tasks = tasks_resp.json()["tasks"]
     assert len(tasks) >= 1
+
+
+def test_pr_comment_fix_webhook(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DISPATCHER_SIMULATE_GITHUB", "true")
+    client = TestClient(app)
+
+    # Simulated PR comment webhook
+    comment_payload = {
+        "action": "created",
+        "repository": {"full_name": "akmalkhaniub/webhook-service", "clone_url": "https://github.com/..."},
+        "issue": {
+            "number": 42,
+            "title": "PR #42: Feature deployment",
+            "body": "Base PR body",
+            "labels": [],
+            "pull_request": {"url": "https://api.github.com/repos/akmalkhaniub/webhook-service/pulls/42"},
+        },
+        "comment": {
+            "id": 9901,
+            "body": "/factory fix please correct test assertions and status code",
+        },
+    }
+    resp = client.post("/webhook/github", json=comment_payload)
+    assert resp.status_code == 202
+    data = resp.json()
+    assert data["status"] == "dispatched"
+    assert data["type"] == "pr_fix"
+    assert data["issue_number"] == 42

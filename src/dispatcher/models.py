@@ -58,6 +58,18 @@ class GitHubWebhookPayload(BaseModel):
             return [str(lbl.get("name", "")) for lbl in self.issue.get("labels", [])]
         return []
 
+    @property
+    def is_pull_request(self) -> bool:
+        if self.issue:
+            return "pull_request" in self.issue
+        return False
+
+    @property
+    def comment_body(self) -> str:
+        if self.comment:
+            return str(self.comment.get("body", ""))
+        return ""
+
 
 class DispatchTask(BaseModel):
     task_id: str
@@ -65,6 +77,7 @@ class DispatchTask(BaseModel):
     issue_number: int | None
     goal: str
     branch_name: str
+    mode: str = "new_issue"
     status: DispatchStatus = DispatchStatus.PENDING
     worktree_path: str = ""
     pr_url: str | None = None

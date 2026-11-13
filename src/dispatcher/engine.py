@@ -32,16 +32,22 @@ class IssueDispatcher:
         issue_number: int | None = None,
         custom_dot: str | None = None,
         simulate_github: bool = False,
+        mode: str = "new_issue",
     ) -> DispatchResult:
         """Executes full Issue-to-PR automation cycle."""
         task_id = f"disp-{uuid.uuid4().hex[:8]}"
-        branch_name = f"factory/issue-{issue_number or 'auto'}-{task_id[:6]}"
+        if mode == "pr_fix":
+            branch_name = f"factory/pr-fix-{issue_number or 'auto'}-{task_id[:6]}"
+        else:
+            branch_name = f"factory/issue-{issue_number or 'auto'}-{task_id[:6]}"
+
         task = DispatchTask(
             task_id=task_id,
             repo_name=repo_name,
             issue_number=issue_number,
             goal=goal,
             branch_name=branch_name,
+            mode=mode,
             status=DispatchStatus.RUNNING,
         )
         self.tasks[task_id] = task

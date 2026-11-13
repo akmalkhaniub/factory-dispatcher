@@ -21,7 +21,8 @@ Verified Pull Request with Test Receipts
 
 ## Features
 
-- **Event-Driven GitHub Webhook**: Triggers automatically on issues labeled `factory-build`, `needs-ai`, or comments containing `@factory run`.
+- **Event-Driven GitHub Webhook**: Triggers automatically on issues labeled `factory-build`, `needs-ai`, or comments containing `@factory` / `/factory`.
+- **Self-Healing PR Comment Repair**: Responds to review comments on PRs like `/factory fix <instructions>`, checks out the PR branch, repairs the code, and pushes updates directly.
 - **Ephemeral Sandbox Isolation**: Creates dedicated worktree environments so concurrent tasks do not collide.
 - **Direct REST API & CLI**: Dispatch tasks on-demand via `POST /api/dispatch` or `python -m dispatcher.cli`.
 - **Test-Gated PR Opening**: Only opens Pull Requests if 100% of automated unit tests pass.

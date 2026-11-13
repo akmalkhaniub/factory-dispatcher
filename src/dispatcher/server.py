@@ -83,6 +83,7 @@ async def github_webhook(
     repo = payload.repo_full_name
     issue_no = payload.issue_number
     simulate_mode = os.environ.get("DISPATCHER_SIMULATE_GITHUB", "false").lower() == "true"
+    task_mode = "pr_fix" if payload.is_pull_request else "new_issue"
 
     # Execute in background
     background_tasks.add_task(
@@ -91,10 +92,12 @@ async def github_webhook(
         goal=goal,
         issue_number=issue_no,
         simulate_github=simulate_mode,
+        mode=task_mode,
     )
 
     return {
         "status": "dispatched",
+        "type": task_mode,
         "repo": repo,
         "issue_number": issue_no,
         "goal": goal,
