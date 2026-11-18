@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attractor Factory Dispatcher | Autonomous Issue-to-PR Console</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --border: #1f2937;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #0284c7;
+      --accent-hover: #0369a1;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { font-size: 20px; font-weight: 700; }
+    .sub { font-size: 13px; color: var(--muted); }
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; border: none; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .val { font-size: 24px; font-weight: 700; margin-top: 4px; }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .panel h2 { font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { font-size: 11px; text-transform: uppercase; color: var(--muted); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(56,189,248,.15); color: var(--accent); }
+    .badge-ok { background: rgba(16,185,129,.15); color: var(--success); }
+    .badge-fail { background: rgba(239,68,68,.15); color: var(--danger); }
+    .form-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; }
+    input {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+    @media (max-width: 720px) { .form-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Factory Dispatcher</h1>
+        <div class="sub">Autonomous GitHub Issue-to-PR &amp; Self-Healing Repair Console</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <a class="btn" href="/docs" target="_blank">API Docs</a>
+        <button class="btn" onclick="toggleTheme()">Theme</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card"><div class="label">Total Dispatches</div><div class="val" id="mTotal">0</div></div>
+      <div class="card"><div class="label">PRs Opened</div><div class="val" id="mOpened" style="color:var(--success);">0</div></div>
+      <div class="card"><div class="label">PR Comment Fixes</div><div class="val" id="mFixes" style="color:var(--accent);">0</div></div>
+      <div class="card"><div class="label">Webhook Auth</div><div class="val" id="mAuth" style="font-size:15px;">-</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Trigger Manual Dispatch (Simulated Sandbox)</h2>
+      <div class="form-row">
+        <input id="inRepo" placeholder="owner/repo" value="akmalkhaniub/webhook-service" />
+        <input id="inGoal" placeholder="Describe the issue or fix goal..." value="Add health check telemetry endpoint" />
+        <button class="btn btn-primary" onclick="triggerDispatch()">Dispatch</button>
+      </div>
+      <div id="dispatchMsg" style="margin-top:10px; font-size:12px; color:var(--muted);"></div>
+    </div>
+
+    <div class="panel">
+      <h2><span>Recent Factory Tasks</span><button class="btn" style="font-size:11px; padding:4px 10px;" onclick="refresh()">Refresh</button></h2>
+      <table>
+        <thead>
+          <tr><th>Task ID</th><th>Repository</th><th>Mode</th><th>Branch</th><th>Status</th></tr>
+        </thead>
+        <tbody id="taskBody">
+          <tr><td colspan="5" style="text-align:center; color:var(--muted);">No tasks dispatched yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute("data-theme") || "dark";
+      const next = cur === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("fd-theme", next);
+    }
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("fd-theme") || "dark");
+
+    async function refresh() {
+      const [h, t] = await Promise.all([
+        fetch("/health").then(r => r.json()),
+        fetch("/api/tasks").then(r => r.json()),
+      ]);
+      const tasks = t.tasks || [];
+      document.getElementById("mTotal").textContent = tasks.length;
+      document.getElementById("mOpened").textContent = tasks.filter(x => x.status === "pr_opened").length;
+      document.getElementById("mFixes").textContent = tasks.filter(x => x.mode === "pr_fix").length;
+      document.getElementById("mAuth").textContent = h.webhook_signature_enforced ? "HMAC-SHA256 Enforced" : "Dev Mode (Open)";
+
+      const tbody = document.getElementById("taskBody");
+      if (!tasks.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--muted);">No tasks dispatched yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = tasks.slice().reverse().map(x => `
+        <tr>
+          <td><code>${x.task_id}</code></td>
+          <td>${x.repo_name}</td>
+          <td><span class="badge">${x.mode}</span></td>
+          <td><code>${x.branch_name}</code></td>
+          <td><span class="badge ${x.status === 'pr_opened' || x.status === 'verified' ? 'badge-ok' : x.status === 'failed' ? 'badge-fail' : ''}">${x.status}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    async function triggerDispatch() {
+      const repo = document.getElementById("inRepo").value.trim();
+      const goal = document.getElementById("inGoal").value.trim();
+      const msg = document.getElementById("dispatchMsg");
+      msg.textContent = "Dispatching task to Attractor Factory...";
+      try {
+        const res = await fetch("/api/dispatch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ repo_name: repo, goal: goal, simulate_github: true })
+        });
+        const data = await res.json();
+        msg.textContent = res.ok ? `Dispatched ${data.task_id} (${data.status}) on branch ${data.branch}` : `Error: ${data.detail}`;
+        refresh();
+      } catch (e) {
+        msg.textContent = "Network error: " + e.message;
+      }
+    }
+
+    refresh();
+  </script>
+</body>
+</html>

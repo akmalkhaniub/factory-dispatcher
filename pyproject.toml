@@ -1,6 +1,6 @@
 [project]
 name = "factory-dispatcher"
-version = "0.1.0"
+version = "0.2.0"
 description = "Autonomous GitHub Issue-to-PR Dispatcher for Attractor Software Factory"
 readme = "README.md"
 requires-python = ">=3.11"
